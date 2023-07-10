@@ -34,6 +34,15 @@ namespace ReliusExtract
             {
                 string month = args[0].ToString();
                 string year = args[1].ToString();
+                bool clearPartCont = false;
+                if(args.Length > 2)
+                {
+                    if (args[2].ToString().ToLower() == "clear")
+                    {
+                        clearPartCont = true;
+                    }
+                }
+
                 Console.WriteLine("Relius Extract Started at: " + DateTime.Now.ToString());
                 sLogFileEntry = ("Relius Extract Started at: " + DateTime.Now.ToString());
                 prtLogFile.WriteToLogFile(sLogFileEntry);
@@ -42,6 +51,10 @@ namespace ReliusExtract
                 Console.WriteLine("Particpant Contribution Update Started at: " + DateTime.Now.ToString());
                 sLogFileEntry = ("Particpant Contribution Update Started at: " + DateTime.Now.ToString());
                 var pc = GetParticpantContributions(month, year).Except(GetParticpantContributionsBilling());
+                if(clearPartCont)
+                {
+                    ClearParticpantContributions();
+                }
                 int count = UpdateParticipantContributions(pc.ToList());
                 Console.WriteLine(count.ToString() + " Participant Records Added At " + DateTime.Now.ToString());
                 sLogFileEntry = (count.ToString() + " Participant Records Added At " + DateTime.Now.ToString());
@@ -399,5 +412,29 @@ namespace ReliusExtract
 
         }
 
+        private void ClearParticpantContributions()
+        {
+            string cmdtxt = "DELETE from ParticipantContributions";
+
+            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["BillingConnectionString"].ToString()))
+            using (var command = connection.CreateCommand())
+            {
+                command.Connection = connection;
+                command.CommandText = cmdtxt;
+                command.CommandTimeout = 0;
+  
+                command.Connection.Open();
+                try
+                {
+                    command.ExecuteNonQuery();
+                }
+                catch (SqlException ex)
+                {
+                    throw new Exception(ex.ToString());
+                }
+
+            }
+
+        }
     }
 }
